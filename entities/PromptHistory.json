@@ -1,0 +1,21 @@
+{
+  "name": "PromptHistory",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "description": "Category selected"
+    },
+    "custom_prompt": {
+      "type": "string",
+      "description": "Optional custom prompt"
+    },
+    "ideas_count": {
+      "type": "number",
+      "description": "Number of ideas generated"
+    }
+  },
+  "required": [
+    "category"
+  ]
+}

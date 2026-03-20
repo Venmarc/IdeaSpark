@@ -1,0 +1,29 @@
+{
+  "name": "SavedIdea",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The idea title"
+    },
+    "description": {
+      "type": "string",
+      "description": "One-sentence description of the idea"
+    },
+    "why_cool": {
+      "type": "string",
+      "description": "Why it's cool or how to start"
+    },
+    "category": {
+      "type": "string",
+      "description": "The category this idea belongs to"
+    },
+    "prompt_used": {
+      "type": "string",
+      "description": "The prompt that generated this idea"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
