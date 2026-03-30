@@ -36,3 +36,11 @@ export async function createServerSupabaseClient() {
     }
   );
 }
+
+export async function getServerSession() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) console.error('Supabase session error:', error);
+  return session;
+}
+
