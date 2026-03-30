@@ -6,11 +6,60 @@ function cleanJson(str: string) {
   return str.replace(/```json/g, '').replace(/```/g, '').trim();
 }
 
+const MOCK_IDEAS = {
+  ideas: [
+    {
+      title: "AI-Powered Meal Planner for Busy Parents",
+      description: "App that scans fridge photos and suggests 30-min family dinners with shopping list.",
+      why_its_cool: "Saves 5+ hours/week on planning and reduces food waste by 40%.",
+      estimated_time: "2 weeks to MVP",
+      difficulty: "Medium"
+    },
+    {
+      title: "Gamified Fitness Quest",
+      description: "Workout app where your real-life exercise powers a fantasy RPG character.",
+      why_its_cool: "Adds engaging progression and storytelling to daily workouts.",
+      estimated_time: "4 weeks to MVP",
+      difficulty: "Medium"
+    },
+    {
+      title: "Local Skill-Swap Platform",
+      description: "Community board connecting people who want to trade skills (e.g., coding for guitar lessons).",
+      why_its_cool: "Fosters real-world connections and accessible education without money.",
+      estimated_time: "3 weeks to MVP",
+      difficulty: "Low"
+    },
+    {
+      title: "Automated Plant Care Monitor",
+      description: "IoT soil sensor paired with a mobile app that texts you when plants need water.",
+      why_its_cool: "Prevents plant death with simple, actionable alerts before it's too late.",
+      estimated_time: "5 weeks to MVP",
+      difficulty: "High"
+    },
+    {
+      title: "Niche Newsletter Generator",
+      description: "Tool aggregating hyper-specific daily news feeds based on 5 user-selected keywords.",
+      why_its_cool: "Cuts through the noise to deliver exactly what the user cares about.",
+      estimated_time: "2 weeks to MVP",
+      difficulty: "Low"
+    }
+  ]
+};
+
 export async function generateIdeas(category: string, prompt: string) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
+
+  const useMock = process.env.MOCK_AI === 'true';
+
+  if (useMock) {
+    console.log('🔹 Using MOCK ideas (quota safe)');
+    // Small delay to simulate network
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    return { ideas: MOCK_IDEAS.ideas };
+  }
 
   const systemMessage = `Return exactly 5 ideas in JSON format. The JSON must have exactly this structure: {"ideas": [{"title": "Title here", "description": "Description here", "why_its_cool": "Reason here"}]}. The requested category is: ${category}. User prompt (optional): ${prompt}`;
 

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import * as api from "./actions";
+import * as api from "@/app/actions";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
