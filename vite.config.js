@@ -4,13 +4,13 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  logLevel: 'error', // Suppress warnings, only show errors
+  // logLevel: 'error',
   plugins: [
     react(),
   ],
   resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "./src"),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(import.meta.dirname, 'src') }
+    ],
   },
 });

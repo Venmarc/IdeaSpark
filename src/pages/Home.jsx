@@ -19,6 +19,7 @@ export default function Home() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [ideas, setIdeas] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentGenerationId, setCurrentGenerationId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: savedIdeas = [], isLoading: loadingSaved } = useQuery({
@@ -38,8 +39,9 @@ export default function Home() {
       const result = await api.generateIdeas(categoryLabel, prompt);
       setIdeas(result.ideas || []);
       
-      // Save to history (fire and forget)
-      api.savePromptHistory(categoryLabel, prompt || "", result.ideas?.length || 0).catch(console.error);
+      // Save generation to database
+      const generation = await api.saveIdeaGeneration(categoryLabel, prompt || "", result);
+      setCurrentGenerationId(generation?.id || null);
     } catch (error) {
       console.error(error);
       toast.error(error.message || "Failed to generate ideas");
@@ -61,14 +63,7 @@ export default function Home() {
   };
 
   const saveIdea = useMutation({
-    mutationFn: (idea) =>
-      api.saveIdea({
-        title: idea.title,
-        description: idea.description,
-        why_cool: idea.why_cool,
-        category: categories.find((c) => c.id === selectedCategory)?.label || selectedCategory,
-        prompt_used: customPrompt,
-      }),
+    mutationFn: (ideaData) => api.saveIdea(ideaData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-ideas"] });
       toast.success("Idea saved!");
@@ -170,7 +165,12 @@ export default function Home() {
                   key={idea.title + i}
                   idea={idea}
                   index={i}
-                  onSave={() => saveIdea.mutate(idea)}
+                  onSave={(item) => saveIdea.mutate({
+                    ...item,
+                    category: categories.find((c) => c.id === selectedCategory)?.label || selectedCategory,
+                    prompt_used: customPrompt,
+                    generation_id: currentGenerationId,
+                  })}
                   isSaved={savedTitles.has(idea.title)}
                 />
               ))}

@@ -10,13 +10,15 @@ export async function generateIdeas(category, prompt) {
   };
 }
 
-export async function savePromptHistory(category, custom_prompt, ideas_count) {
+export async function saveIdeaGeneration(category, prompt, raw_response = null) {
   const { data, error } = await supabase
-    .from('prompt_history')
-    .insert([{ category, custom_prompt, ideas_count }]);
+    .from('idea_generations')
+    .insert([{ category, prompt_used: prompt, raw_response }])
+    .select()
+    .single();
     
   if (error) {
-    console.error("Error saving prompt history:", error);
+    console.error("Error saving idea generation:", error);
     throw error;
   }
   return data;
