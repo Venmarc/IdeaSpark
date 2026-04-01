@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import * as api from "@/app/actions";
+import {
+  generateIdeas as generateIdeasAction,
+  getSavedIdeas,
+  saveIdea,
+  deleteIdea,
+  saveIdeaGeneration
+} from "@/app/actions";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -27,22 +33,22 @@ export default function Home() {
 
   const { data: savedIdeas = [], isLoading: loadingSaved } = useQuery({
     queryKey: ["saved-ideas"],
-    queryFn: () => api.getSavedIdeas(),
+    queryFn: () => getSavedIdeas(),
   });
 
   const savedTitles = new Set(savedIdeas.map((i: any) => i.title));
 
-  const generateIdeas = async (category: string, prompt: string) => {
+  const handleGenerateIdeas = async (category: string, prompt: string) => {
     setIsGenerating(true);
     setIdeas([]);
 
     const categoryLabel = categories.find((c) => c.id === category)?.label || category;
 
     try {
-      const result = await api.generateIdeas(categoryLabel, prompt);
+      const result = await generateIdeasAction(categoryLabel, prompt);
       setIdeas(result.ideas || []);
       
-      const generation = await api.saveIdeaGeneration(categoryLabel, prompt || "", result);
+      const generation = await saveIdeaGeneration(categoryLabel, prompt || "", result);
       setCurrentGenerationId(generation?.id || null);
     } catch (error: any) {
       console.error(error);
@@ -54,26 +60,26 @@ export default function Home() {
   };
 
   const handleGenerate = () => {
-    generateIdeas(selectedCategory, customPrompt);
+    handleGenerateIdeas(selectedCategory, customPrompt);
   };
 
   const handleSurpriseMe = () => {
     const randomCat = categories[Math.floor(Math.random() * categories.length)];
     setSelectedCategory(randomCat.id);
     setCustomPrompt("");
-    generateIdeas(randomCat.id, "");
+    handleGenerateIdeas(randomCat.id, "");
   };
 
-  const saveIdea = useMutation({
-    mutationFn: (ideaData: any) => api.saveIdea(ideaData),
+  const saveIdeaMutation = useMutation({
+    mutationFn: (ideaData: any) => saveIdea(ideaData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-ideas"] });
       toast.success("Idea saved!");
     },
   });
 
-  const deleteIdea = useMutation({
-    mutationFn: (id: number) => api.deleteIdea(id),
+  const deleteIdeaMutation = useMutation({
+    mutationFn: (id: number) => deleteIdea(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-ideas"] });
       toast.success("Idea removed");
@@ -92,7 +98,7 @@ export default function Home() {
           </div>
           <SavedIdeasDrawer
             savedIdeas={savedIdeas}
-            onDelete={(id: number) => deleteIdea.mutate(id)}
+            onDelete={(id: number) => deleteIdeaMutation.mutate(id)}
             isLoading={loadingSaved}
           />
         </div>
@@ -164,7 +170,7 @@ export default function Home() {
                   key={idea.title + i}
                   idea={idea}
                   index={i}
-                  onSave={(item: any) => saveIdea.mutate({
+                  onSave={(item: any) => saveIdeaMutation.mutate({
                     ...item,
                     category: categories.find((c) => c.id === selectedCategory)?.label || selectedCategory,
                     prompt_used: customPrompt,
