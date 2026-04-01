@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // Disable Turbopack locally if it's panicking
+  },
 };
 
 export default nextConfig;
