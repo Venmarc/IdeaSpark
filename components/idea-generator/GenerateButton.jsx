@@ -11,8 +11,8 @@ export default function GenerateButton({ onClick, isLoading, hasResults }) {
       size="lg"
       className={cn(
         "relative overflow-hidden px-8 h-12 text-base font-semibold rounded-xl",
-        "bg-primary hover:bg-primary/90 text-primary-foreground",
-        "shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30",
+        "bg-primary hover:bg-primary/90 text-white",
+        "shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5",
         "transition-all duration-300"
       )}
     >

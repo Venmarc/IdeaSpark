@@ -133,9 +133,10 @@ export async function getSavedIdeas() {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from('saved_ideas')
-    .select('*')
+    .select('id, title, description, category, created_at, why_its_cool, estimated_time, difficulty')
     .eq('user_id', session.user.id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(50);
     
   if (error) {
     console.error("Error fetching saved ideas:", error);
