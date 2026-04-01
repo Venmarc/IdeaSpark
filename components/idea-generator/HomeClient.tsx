@@ -28,6 +28,7 @@ export default function Home() {
   const [ideas, setIdeas] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentGenerationId, setCurrentGenerationId] = useState<number | null>(null);
+  const generationRef = React.useRef(0); // For canceling/ignoring old requests
   const queryClient = useQueryClient();
 
   const { data: savedIdeas = [], isLoading: loadingSaved } = useQuery({
@@ -38,6 +39,7 @@ export default function Home() {
   const savedTitles = new Set(savedIdeas.map((i: any) => i.title));
 
   const handleGenerateIdeas = async (category: string, prompt: string) => {
+    const attemptId = ++generationRef.current;
     setIsGenerating(true);
     setIdeas([]);
 
@@ -45,15 +47,28 @@ export default function Home() {
 
     try {
       const result = await generateIdeasAction(categoryLabel, prompt);
+      
+      // If user clicked "Stop", attemptId will no longer match generationRef.current
+      if (attemptId !== generationRef.current) return;
+
       setIdeas(result.ideas || []);
       setCurrentGenerationId(result.generation_id ?? null);
     } catch (error: any) {
+      if (attemptId !== generationRef.current) return;
       console.error(error);
       toast.error(error.message || "Failed to generate ideas");
       setIdeas([]);
     } finally {
-      setIsGenerating(false);
+      if (attemptId === generationRef.current) {
+        setIsGenerating(false);
+      }
     }
+  };
+
+  const handleStop = () => {
+    generationRef.current++; // Invalidate pending request
+    setIsGenerating(false);
+    toast.info("Generation stopped");
   };
 
   const handleGenerate = () => {
@@ -121,6 +136,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <GenerateButton
               onClick={handleGenerate}
+              onStop={handleStop}
               isLoading={isGenerating}
               hasResults={ideas.length > 0}
             />
