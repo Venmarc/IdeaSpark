@@ -6,7 +6,6 @@ import {
   getSavedIdeas,
   saveIdea,
   deleteIdea,
-  saveIdeaGeneration
 } from "@/app/actions";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -47,9 +46,7 @@ export default function Home() {
     try {
       const result = await generateIdeasAction(categoryLabel, prompt);
       setIdeas(result.ideas || []);
-      
-      const generation = await saveIdeaGeneration(categoryLabel, prompt || "", result);
-      setCurrentGenerationId(generation?.id || null);
+      setCurrentGenerationId(result.generation_id ?? null);
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Failed to generate ideas");

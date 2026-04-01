@@ -20,7 +20,27 @@ const MOCK_IDEAS = {
       estimated_time: "4 weeks",
       difficulty: "Medium"
     },
-    // Add 3 more varied, high-quality mocks here (different categories)
+    {
+      title: "Micro-SaaS Landing Page Builder",
+      description: "Drag-and-drop builder that generates a complete landing page from a one-line pitch.",
+      why_its_cool: "Lets solo founders ship a polished page in under 10 minutes.",
+      estimated_time: "6 weeks",
+      difficulty: "Hard"
+    },
+    {
+      title: "Neighborhood Skill Swap Platform",
+      description: "Hyperlocal marketplace where people trade skills instead of money — coding for plumbing, etc.",
+      why_its_cool: "Builds community while solving real service-access problems.",
+      estimated_time: "5 weeks",
+      difficulty: "Medium"
+    },
+    {
+      title: "Focus Timer with Ambient Soundscapes",
+      description: "Pomodoro timer paired with AI-generated background audio tuned to your task type.",
+      why_its_cool: "Science-backed productivity boost with zero app-switching needed.",
+      estimated_time: "2 weeks",
+      difficulty: "Easy"
+    }
   ]
 };
 
@@ -34,20 +54,23 @@ export async function generateIdeas(category: string, prompt: string = ""): Prom
 
   let ideas: any[] = [];
   let rawResponse: any = { source: useMock ? "mock" : "ai" };
+  let promptUsed = `Category: ${category}`;
 
   if (useMock) {
     console.log('🔹 Using MOCK ideas (quota safe)');
     await new Promise(resolve => setTimeout(resolve, 1200));
     ideas = [...MOCK_IDEAS.ideas];
   } else {
-    const systemPrompt = `You are a creative idea generator. Respond with valid JSON only. No extra text.
+    promptUsed = `You are an expert creative idea generator.
+Respond with **valid JSON only**. No explanations, no markdown, no extra text.
 
-Return EXACTLY 5 ideas in this exact structure:
+Return EXACTLY 5 different, actionable ideas in this precise structure:
+
 {
   "ideas": [
     {
-      "title": "Short catchy title",
-      "description": "1-2 sentence clear description",
+      "title": "Short, catchy title",
+      "description": "1-2 clear sentences describing the idea",
       "why_its_cool": "Why this idea is exciting or useful",
       "estimated_time": "e.g. 2 weeks",
       "difficulty": "Easy | Medium | Hard"
@@ -56,49 +79,71 @@ Return EXACTLY 5 ideas in this exact structure:
 }
 
 Category: ${category}
-User details: ${prompt || "None"}`;
+Optional user details: ${prompt || "None"}
+
+Make the 5 ideas diverse and high-quality.`;
 
     try {
-      const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.75 }
-        })
-      });
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: promptUsed }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.7
+            }
+          })
+        }
+      );
 
-      if (!geminiRes.ok) throw new Error("Gemini failed");
+      if (!geminiRes.ok) throw new Error(`Gemini HTTP ${geminiRes.status}`);
 
       const data = await geminiRes.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       const parsed = JSON.parse(text.trim());
-      ideas = parsed.ideas || [];
+      ideas = Array.isArray(parsed.ideas) ? parsed.ideas : [];
     } catch (err) {
       console.error("Gemini error:", err);
-      throw new Error("Idea generation failed. Try again.");
+      throw new Error("Idea generation failed. Please try again.");
     }
+  }
+
+  // Guarantee exactly 5: pad with mocks if AI returned fewer, then slice
+  if (ideas.length < 5) {
+    const padding = MOCK_IDEAS.ideas.filter(
+      m => !ideas.some(i => i.title === m.title)
+    );
+    ideas = [...ideas, ...padding].slice(0, 5);
+  } else {
+    ideas = ideas.slice(0, 5);
   }
 
   const supabase = await createServerSupabaseClient();
   const { data: generation, error } = await supabase
     .from('idea_generations')
     .insert({
+      user_id: session.user.id,
       category,
       details: prompt || null,
-      prompt_used: `Category: ${category}`,
+      prompt_used: promptUsed,
       raw_response: rawResponse
     })
     .select('id')
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("DB insert error:", error);
+    // Non-fatal: don't throw — still return the ideas
+  }
 
   revalidatePath('/');
 
   return {
-    ideas: ideas.slice(0, 5),
-    generation_id: generation.id
+    ideas,
+    generation_id: generation?.id ?? null
   };
 }
 

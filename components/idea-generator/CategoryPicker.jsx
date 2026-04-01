@@ -30,7 +30,7 @@ export default function CategoryPicker({ selected, onSelect }) {
             onClick={() => onSelect(cat.id)}
             className={cn(
               "group relative flex flex-col items-center gap-2 rounded-xl p-4 transition-all duration-200",
-              "border hover:shadow-lg hover:-translate-y-1 hover:scale-105 active:scale-95",
+              "border hover:shadow-md hover:-translate-y-0.5 active:scale-95",
               isActive
                 ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
                 : "border-border bg-card hover:border-primary/30"
