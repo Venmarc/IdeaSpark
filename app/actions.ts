@@ -105,9 +105,34 @@ Make the 5 ideas diverse and high-quality.`;
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       const parsed = JSON.parse(text.trim());
       ideas = Array.isArray(parsed.ideas) ? parsed.ideas : [];
-    } catch (err) {
-      console.error("Gemini error:", err);
-      throw new Error("Idea generation failed. Please try again.");
+    } catch (geminiErr) {
+      console.error("Gemini failed, falling back to OpenAI:", geminiErr);
+      
+      try {
+        const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: promptUsed }],
+            response_format: { type: "json_object" },
+            temperature: 0.7
+          })
+        });
+
+        if (!openaiRes.ok) throw new Error(`OpenAI HTTP ${openaiRes.status}`);
+
+        const data = await openaiRes.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        const parsed = JSON.parse(text.trim());
+        ideas = Array.isArray(parsed.ideas) ? parsed.ideas : [];
+      } catch (openaiErr) {
+        console.error("OpenAI fallback also failed:", openaiErr);
+        throw new Error("Idea generation failed. Please try again.");
+      }
     }
   }
 
