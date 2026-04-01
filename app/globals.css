@@ -2,6 +2,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-primary: #f97316;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #eab308;
+}
+
 body {
   font-feature-settings: "kern" 1, "tnum" 1;
 }

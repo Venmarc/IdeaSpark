@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "./providers";
 import "@/app/globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -23,7 +16,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} font-sans h-full antialiased`}
+      className="font-sans h-full antialiased"
     >
       <body className="min-h-full flex flex-col">
         <Providers>
